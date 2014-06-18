@@ -4,15 +4,14 @@ author: "Nathan Byers"
 date: "Tuesday, June 19, 2014"
 output:
   html_document:
-    number_sections: yes
     theme: readable
 ---
 
 In this tutorial we'll cover the following topics:
 
-1. [Basic Maps](#basic)
-2. [Google Maps](#google)
-4. [Leaflet Maps](#leaflet)
+* [Basic Maps](#basic)
+* [Google Maps](#google)
+* [Leaflet Maps](#leaflet)
 
 
 # Basic Maps {#basic}
@@ -57,7 +56,7 @@ points(x = monitors$long, y = monitors$lat)
 We can jazz it up a bit by making it a county map and changing the symbol type and
 color.
 
-```{r, echo=FALSE}
+```{r}
 map(database = 'county', regions = 'indiana')
 points(x = monitors$long, y = monitors$lat, pch = 19, col = 'red')
 ```
@@ -119,6 +118,14 @@ browseURL(leaf.map)
 ```
 
 ![leaflet](screenshots/leaflet.png)
+
+
+
+# R Markdown
+
+This tutorial was created using RStudio's <a href="http://rmarkdown.rstudio.com/"
+target="_blank">R Markdown</a>. The code can be found on <a href="https://github.com/NateByers/mapsRidem"
+target="_blank">GitHub</a>.
 
 
 
