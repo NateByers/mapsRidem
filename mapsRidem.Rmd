@@ -1,0 +1,127 @@
+---
+title: "Mapping in R"
+author: "Nathan Byers"
+date: "Tuesday, June 19, 2014"
+output:
+  html_document:
+    number_sections: yes
+    theme: readable
+---
+
+In this tutorial we'll cover the following topics:
+
+1. [Basic Maps](#basic)
+2. [Google Maps](#google)
+4. [Leaflet Maps](#leaflet)
+
+
+# Basic Maps {#basic}
+There is no function for displaying maps in the base R functionality. To display
+a simple map, we use the 'maps' package.
+
+```{r}
+library(maps)
+```
+
+For our examples we will be using Indiana air monitoring site locations. 
+
+```{r}
+monitors <- read.table(header=T, text='
+  monitorid        lat        long   datum                    name            
+          1   41.60668  -87.304729   WGS84              Gary-IITRI
+          2  39.811097	-86.114469   WGS84  Indpls-Washington-Park
+          3  39.749019	-86.186314   WGS84      Indpls-Harding-St.
+          4  38.013248	-87.577856   WGS84  Evansville-Buena-Vista
+          5  39.159383	-86.504762   WGS84             Bloomington
+                       ')
+```
+
+First, let's create a simple Indiana map.
+
+```{r}
+map(database = 'state', regions = 'indiana')
+```
+
+Now we can use our monitor lats and longs to add points to the map using the base
+`points()` function.
+
+```{r, eval=FALSE}
+points(x = monitors$long, y = monitors$lat)
+```
+
+```{r, echo=FALSE}
+map(database = 'state', regions = 'indiana')
+points(x = monitors$long, y = monitors$lat)
+```
+
+We can jazz it up a bit by making it a county map and changing the symbol type and
+color.
+
+```{r, echo=FALSE}
+map(database = 'county', regions = 'indiana')
+points(x = monitors$long, y = monitors$lat, pch = 19, col = 'red')
+```
+
+
+# Google Maps {#google}
+
+
+
+
+To make interactive Google maps, we can use the `googleVis` package.
+
+```{r, message=FALSE}
+library(googleVis)
+```
+
+```{r, echo=FALSE}
+op <- options(gvis.plot.tag='chart')
+```
+
+We have to do some formatting first. The coordinates must be in the form `lat:long`
+so we need to create a data frame with a variable in that format.
+
+```{r, results='asis', tidy=FALSE}
+google.location <- paste(monitors$lat, monitors$long, sep = ":")
+monitors.google <- data.frame(monitors, google.location)
+g.inter.map <- gvisMap(data = monitors.google, locationvar = "google.location",
+                       tipvar = "name")
+plot(g.inter.map)
+```
+
+```{r, echo=FALSE}
+options(op)
+```
+
+
+# Leaflet Maps {#leaflet}
+
+
+Leaflet is another interactive map that can be created in R using the `leafletR`
+package.
+
+```{r, message=FALSE}
+library(leafletR)
+```
+
+The coordinates must first be converted to a GeoJSON file using the `toGeoJSON()`
+function.
+
+```{r, eval=FALSE}
+leaf.data <- toGeoJSON(data = monitors[, -1], dest = tempdir(), name = "monitors")
+```
+
+And we create the map using the `leaflet()` function.
+
+```{r, eval=FALSE}
+leaf.map <- leaflet(data = leaf.data, popup = "name", dest = tempdir())
+browseURL(leaf.map)
+```
+
+![leaflet](screenshots/leaflet.png)
+
+
+
+
+
+
