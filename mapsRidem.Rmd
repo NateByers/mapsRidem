@@ -1,28 +1,31 @@
 ---
 title: "Mapping in R"
 author: "Nathan Byers"
-date: "Tuesday, June 19, 2014"
+date: "Thursday, June 19, 2014"
 output:
   html_document:
     theme: readable
 ---
+
+------------------------------------------------------------------------------
 
 In this tutorial we'll cover the following topics:
 
 * [Basic Maps](#basic)
 * [Google Maps](#google)
 * [Leaflet Maps](#leaflet)
+* [UTMs](#utms)
 
 
 # Basic Maps {#basic}
 There is no function for displaying maps in the base R functionality. To display
-a simple map, we use the 'maps' package.
+a simple map, we use the `maps` package.
 
 ```{r}
 library(maps)
 ```
 
-For our examples we will be using Indiana air monitoring site locations. 
+For most of our examples we will be using Indiana air pollutant monitor locations. 
 
 ```{r}
 monitors <- read.table(header=T, text='
@@ -32,6 +35,7 @@ monitors <- read.table(header=T, text='
           3  39.749019	-86.186314   WGS84      Indpls-Harding-St.
           4  38.013248	-87.577856   WGS84  Evansville-Buena-Vista
           5  39.159383	-86.504762   WGS84             Bloomington
+          6  39.997484  -86.395172   WGS84              Whitestown
                        ')
 ```
 
@@ -61,10 +65,36 @@ map(database = 'county', regions = 'indiana')
 points(x = monitors$long, y = monitors$lat, pch = 19, col = 'red')
 ```
 
+We can also select specific counties to look at, and give the map a title.
+
+```{r}
+map(database = 'county', regions = c('indiana,marion', 'indiana,boone'))
+points(x = monitors$long, y = monitors$lat, pch = 19, col = 'red')
+title(main = "Air Monitor Locations")
+```
+
+If we want the counties to be automatically labeled, we use the `map.text` 
+function.
+
+```{r}
+map.text(database = 'county', regions = c('indiana,marion', 'indiana,boone'))
+points(x = monitors$long, y = monitors$lat, pch = 19, col = 'red')
+title(main = "Air Monitor Locations")
+```
+
+
+And if we want to label the monitors, we use the `text()` function.
+
+```{r}
+map(database = 'county', regions = c('indiana,marion', 'indiana,boone'))
+points(x = monitors$long, y = monitors$lat, pch = 19, col = 'red')
+title(main = "Air Monitor Locations")
+text(x = monitors$long, y = monitors$lat, labels = monitors$name, pos = 2)
+```
+
+
 
 # Google Maps {#google}
-
-
 
 
 To make interactive Google maps, we can use the `googleVis` package.
@@ -110,7 +140,7 @@ function.
 leaf.data <- toGeoJSON(data = monitors[, -1], dest = tempdir(), name = "monitors")
 ```
 
-And we create the map using the `leaflet()` function.
+And we create the interactive map using the `leaflet()` function.
 
 ```{r, eval=FALSE}
 leaf.map <- leaflet(data = leaf.data, popup = "name", dest = tempdir())
@@ -119,7 +149,52 @@ browseURL(leaf.map)
 
 ![leaflet](screenshots/leaflet.png)
 
+# UTMs
 
+If your coordinates are in UTMs, you need to transform them to lat/longs to plot
+them on a projected map. For this example, we'll use the deep river chemistry data from the `IDEMdata` package on <a href="https://github.com/InDEM/IDEMdata" target="_blank">GitHub</a>. 
+First we need to load the `devtools` package and use it to download the `IDEMdata`
+package from GitHub.
+
+```{r, echo=FALSE, message=FALSE}
+if(!require(devtools)) install.packages("devtools")
+library(devtools)
+if(!require(IDEMdata)) install_github("InDEM/IDEMdata")
+```
+
+```{r, eval=FALSE}
+library(devtools)
+install_github("InDEM/IDEMdata")
+```
+
+Now we load the `IDEMdata` package and the `deep_river_chemistry` data frame.
+
+```{r}
+library(IDEMdata)
+data(deep_river_chemistry)
+```
+
+To transform the UTMs to lat/longs, we use the `rgdal` package.
+
+```{r, message=FALSE}
+library(rgdal)
+```
+
+Now we create a UTM coordinates matrix using the `SpatialPoints()` function and
+transform the coordinates using the `spTransform()` function.
+
+```{r}
+utms <- SpatialPoints(deep_river_chemistry[, c("UTM_EAST", "UTM_NORTH")],
+                      proj4string=CRS("+proj=utm +zone=16"))
+longlats <- spTransform(utms, CRS("+proj=longlat"))
+```
+
+Now we can plot these locations on a county map.
+
+```{r}
+map(database = 'county', regions = c('indiana,lake', 'indiana,porter'))
+points(longlats, pch = 18, col = 'blue')
+```
 
 # R Markdown
 
